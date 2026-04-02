@@ -26,12 +26,14 @@ interface OrderItem {
   order_item_extras: OrderItemExtra[]
 }
 interface Order {
-  id: string
-  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
-  total: number; order_items: OrderItem[]
-  customer_name: string | null
+  id: string; location_id: string
+  customer_name: string | null; customer_phone: string | null
   order_type: 'table' | 'pickup' | 'delivery'
-  table_number: string | null
+  table_number: string | null; delivery_address: string | null
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+  total: number; notes: string | null; cancel_reason: string | null
+  payment_method: string | null; created_at: string
+  order_items: OrderItem[]
 }
 
 export interface ProductWithExtras extends SimpleProduct { allExtras: ExtraGroup[] }
