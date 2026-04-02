@@ -31,7 +31,7 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
     }
   }
 
-  const plan = sub.plans as { name: string; max_restaurants: number; max_locations: number }
+  const plan = (Array.isArray(sub.plans) ? sub.plans[0] : sub.plans) as { name: string; max_restaurants: number; max_locations: number }
 
   return {
     planName: plan.name,
