@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/mswhi/Desktop/menu-digital/app/api -type f -name *.ts -o -name *.tsx)",
+      "Bash(curl -s http://localhost:3000/pedido/fec314c9-781c-4f12-a211-a304dd8406f7)",
+      "Bash(grep -r 'CREATE TABLE' /c/Users/mswhi/Desktop/menu-digital --include=*.sql --include=*.ts --include=*.tsx)",
+      "Bash(find \"/c/Users/mswhi/Desktop/menu-digital/app/\\(admin\\)\" -type d)",
+      "Bash(gh pr:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
