@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import RegisterForm from '@/components/auth/RegisterForm'
 
 export default function RegisterPage() {
@@ -8,7 +9,9 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold">Crear cuenta</h1>
           <p className="text-sm text-gray-500 mt-1">30 días gratis, sin tarjeta de crédito</p>
         </div>
-        <RegisterForm />
+        <Suspense>
+          <RegisterForm />
+        </Suspense>
       </div>
     </main>
   )

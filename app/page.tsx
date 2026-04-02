@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { UtensilsCrossed, QrCode, Zap, LayoutDashboard, RefreshCw } from 'lucide-react'
 import RegisterForm from '@/components/auth/RegisterForm'
@@ -88,7 +89,9 @@ export default function HomePage() {
             <p className="text-sm text-gray-500 mt-2">Sin tarjeta de crédito. Listo en minutos.</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <Suspense>
             <RegisterForm />
+          </Suspense>
           </div>
         </div>
       </section>
