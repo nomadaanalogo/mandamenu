@@ -11,6 +11,7 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [terms, setTerms] = useState(false)
   const supabase = createClient()
   const searchParams = useSearchParams()
 
@@ -70,7 +71,23 @@ export default function RegisterForm() {
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
       </div>
 
-      <button type="submit" disabled={loading}
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)}
+          className="mt-0.5 shrink-0 accent-black" required />
+        <span className="text-xs text-gray-500 leading-relaxed">
+          Acepto los{' '}
+          <a href="/terminos" target="_blank" className="text-gray-900 font-medium underline underline-offset-2 hover:text-orange-500 transition-colors">
+            términos y condiciones
+          </a>{' '}
+          y la{' '}
+          <a href="/privacidad" target="_blank" className="text-gray-900 font-medium underline underline-offset-2 hover:text-orange-500 transition-colors">
+            política de privacidad
+          </a>{' '}
+          de MandaMenu.
+        </span>
+      </label>
+
+      <button type="submit" disabled={loading || !terms}
         className="bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
         {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
       </button>

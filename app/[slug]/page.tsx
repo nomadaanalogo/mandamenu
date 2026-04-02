@@ -1,8 +1,34 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import MenuPublic from '@/components/menu/MenuPublic'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('name, logo_url')
+    .eq('slug', slug)
+    .single()
+
+  if (!restaurant) return {}
+
+  const title = `${restaurant.name} — Menú digital`
+  const description = `Mirá el menú de ${restaurant.name} y hacé tu pedido de forma fácil y rápida.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(restaurant.logo_url && { images: [{ url: restaurant.logo_url }] }),
+    },
+  }
+}
 
 export default async function MenuPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

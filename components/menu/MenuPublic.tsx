@@ -168,7 +168,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
       })),
       notes,
     })
-    window.open(url, '_blank')
+   // window.open(url, '_blank')
     window.location.href = `/pedido/${data.order_id}`
   }
 
@@ -473,7 +473,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                 ) : (
                   <>
                     <span>Confirmar pedido</span>
-                    <span className="text-white/70 text-xs">· WhatsApp</span>
+                    
                   </>
                 )}
               </button>
