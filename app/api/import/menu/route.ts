@@ -18,9 +18,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No se recibió imagen' }, { status: 400 })
   }
 
-  const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+  const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
   if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: 'La imagen no puede superar 5 MB' }, { status: 413 })
+    return NextResponse.json({ error: 'La imagen no puede superar 10 MB. Intentá con un screenshot o una foto de menor resolución.' }, { status: 413 })
   }
 
   const buffer = await file.arrayBuffer()

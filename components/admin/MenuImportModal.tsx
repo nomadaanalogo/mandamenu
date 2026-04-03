@@ -260,7 +260,8 @@ export default function MenuImportModal({
                     <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center text-2xl">📷</div>
                     <div className="text-center">
                       <p className="text-sm font-medium text-gray-700">Arrastrá o tocá para subir</p>
-                      <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WEBP</p>
+                      <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WEBP · máx. 10 MB</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Tip: un screenshot del menú funciona perfecto ✨</p>
                     </div>
                   </>
                 )}
