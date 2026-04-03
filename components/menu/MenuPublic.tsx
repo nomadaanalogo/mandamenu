@@ -461,28 +461,33 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                 {orderType === 'table' && (
                   <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)}
                     placeholder="Número de mesa (opcional)"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-gray-50" />
+                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+                    style={{ backgroundColor: bg, border: `1px solid ${border}`, color: textMain }} />
                 )}
                 <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)}
                   placeholder="Tu nombre *"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-gray-50" />
+                  className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+                  style={{ backgroundColor: bg, border: `1px solid ${border}`, color: textMain }} />
                 <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
                   placeholder={orderType === 'table' ? 'Tu WhatsApp (opcional)' : 'Tu WhatsApp *'}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-gray-50" />
+                  className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+                  style={{ backgroundColor: bg, border: `1px solid ${border}`, color: textMain }} />
                 {orderType === 'delivery' && (
                   <input type="text" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)}
                     placeholder="Dirección de entrega *"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-gray-50" />
+                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+                    style={{ backgroundColor: bg, border: `1px solid ${border}`, color: textMain }} />
                 )}
                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder="¿Alguna nota para tu pedido?" rows={2}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-gray-50 resize-none" />
+                  className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
+                  style={{ backgroundColor: bg, border: `1px solid ${border}`, color: textMain }} />
               </div>
 
               {/* Total */}
-              <div className="flex items-center justify-between py-4 mt-2">
-                <span className="font-semibold text-gray-700">Total</span>
-                <span className="text-xl font-bold">${fmt(total)}</span>
+              <div className="flex items-center justify-between py-4 mt-2" style={{ borderTop: `1px solid ${border}` }}>
+                <span className="font-semibold" style={{ color: textSub }}>Total</span>
+                <span className="text-xl font-bold" style={{ color: textMain }}>${fmt(total)}</span>
               </div>
             </div>
 
