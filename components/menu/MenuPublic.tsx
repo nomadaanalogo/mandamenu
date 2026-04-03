@@ -27,7 +27,7 @@ interface Restaurant {
   id: string; name: string; slug: string
   primary_color: string; secondary_color: string
   logo_url: string | null; instagram_handle: string | null
-  currency?: string
+  currency?: string; dark_mode?: boolean
 }
 interface SelectedExtra { groupId: string; option: ExtraOption }
 interface CartItem {
@@ -50,6 +50,14 @@ export default function MenuPublic({ restaurant, categories, featured, location 
   const primary   = restaurant.primary_color   || '#000000'
   const secondary = restaurant.secondary_color || primary
   const currency  = restaurant.currency ?? 'USD'
+  const dark      = restaurant.dark_mode ?? false
+
+  // Tokens de color según modo
+  const bg        = dark ? '#0a0a0a' : '#f9fafb'
+  const surface   = dark ? '#1a1a1a' : '#ffffff'
+  const border    = dark ? '#2a2a2a' : '#f3f4f6'
+  const textMain  = dark ? '#f5f5f5' : '#111827'
+  const textSub   = dark ? '#9ca3af' : '#6b7280'
 
   // carrito
   const [cart, setCart] = useState<CartItem[]>([])
@@ -175,10 +183,11 @@ export default function MenuPublic({ restaurant, categories, featured, location 
   const fmt = (n: number) => n.toLocaleString('es-CO', { minimumFractionDigits: 0 })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: bg, color: textMain }}>
 
       {/* ── HEADER ── */}
-      <div className="bg-white px-4 pt-5 pb-5" style={{
+      <div className="px-4 pt-5 pb-5" style={{
+        backgroundColor: surface,
         boxShadow: `0 8px 24px -6px ${primary}40`
       }}>
         <div className="max-w-lg mx-auto flex items-stretch gap-4">
@@ -196,13 +205,13 @@ export default function MenuPublic({ restaurant, categories, featured, location 
           {/* Info — alineada al tope de la imagen */}
           <div className="flex flex-col justify-center gap-1 min-w-0">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <h1 className="font-black text-base leading-tight tracking-tight">{restaurant.name}</h1>
+              <h1 className="font-black text-base leading-tight tracking-tight" style={{ color: textMain }}>{restaurant.name}</h1>
               {location?.name && (
-                <span className="text-xs font-semibold text-gray-400">{location.name}</span>
+                <span className="text-xs font-semibold" style={{ color: textSub }}>{location.name}</span>
               )}
             </div>
             {location?.schedule && (
-              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5 text-xs" style={{ color: textSub }}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: secondary, flexShrink: 0 }}>
                   <circle cx="6" cy="6" r="5"/><path d="M6 3v3l2 1.5" strokeLinecap="round"/>
                 </svg>
@@ -210,7 +219,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
               </span>
             )}
             {(location?.address || location?.city) && (
-              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5 text-xs" style={{ color: textSub }}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: secondary, flexShrink: 0 }}>
                   <path d="M6 1C4.07 1 2.5 2.57 2.5 4.5c0 2.75 3.5 6.5 3.5 6.5s3.5-3.75 3.5-6.5C9.5 2.57 7.93 1 6 1z" strokeLinejoin="round"/>
                   <circle cx="6" cy="4.5" r="1.25"/>
@@ -219,7 +228,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
               </span>
             )}
             {location?.whatsapp && (
-              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5 text-xs" style={{ color: textSub }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ color: secondary, flexShrink: 0 }}>
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                 </svg>
@@ -231,14 +240,14 @@ export default function MenuPublic({ restaurant, categories, featured, location 
       </div>
 
       {/* ── NAVEGACIÓN DE CATEGORÍAS ── */}
-      <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm border-b border-gray-100 px-4 py-3">
+      <div className="sticky top-0 z-20 backdrop-blur-sm px-4 py-3" style={{ backgroundColor: `${bg}f2`, borderBottom: `1px solid ${border}` }}>
         <div className="flex flex-wrap justify-center gap-2">
           <button
             onClick={() => selectCat(null)}
             className="text-xs px-3 py-1.5 rounded-full font-medium border transition-colors"
             style={activeCat === null
               ? { backgroundColor: primary, borderColor: primary, color: '#fff' }
-              : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#374151' }}>
+              : { backgroundColor: surface, borderColor: border, color: textSub }}>
             Todas
           </button>
           {categories.filter(c => c.products.some(p => p.is_available)).map(cat => (
@@ -248,7 +257,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
               className="text-xs px-3 py-1.5 rounded-full font-medium border transition-colors"
               style={activeCat === cat.id
                 ? { backgroundColor: primary, borderColor: primary, color: '#fff' }
-                : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#374151' }}>
+                : { backgroundColor: surface, borderColor: border, color: textSub }}>
               {cat.name}
             </button>
           ))}
@@ -267,14 +276,15 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                 const cat = categories.find(c => c.products.some(pr => pr.id === p.id))
                 return (
                   <div key={p.id}
-                    className="shrink-0 w-40 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                    className="shrink-0 w-40 rounded-2xl shadow-sm overflow-hidden cursor-pointer"
+                    style={{ backgroundColor: surface, border: `1px solid ${border}` }}
                     onClick={() => cat && handleProductAdd(p, cat)}>
                     <div className="h-24 flex items-center justify-center text-4xl"
                       style={{ backgroundColor: `${primary}15` }}>
                       🍽️
                     </div>
                     <div className="p-3">
-                      <p className="text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
+                      <p className="text-xs font-semibold leading-tight line-clamp-2" style={{ color: textMain }}>{p.name}</p>
                       <p className="text-sm font-bold mt-1" style={{ color: primary }}>${fmt(p.price)}</p>
                     </div>
                   </div>
@@ -297,19 +307,19 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                 <button
                   onClick={() => toggleCat(cat.id)}
                   className="w-full flex items-center gap-3 py-2 px-1">
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px" style={{ backgroundColor: border }} />
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-900">
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: textMain }}>
                       {cat.name}
                     </span>
-                    <span className="text-xs font-semibold text-gray-400">
+                    <span className="text-xs font-semibold" style={{ color: textSub }}>
                       ({availableProducts.length})
                     </span>
                   </div>
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px" style={{ backgroundColor: border }} />
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                    strokeWidth="2.5" strokeLinecap="round" className="shrink-0 text-gray-300 transition-transform"
-                    style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}>
+                    strokeWidth="2.5" strokeLinecap="round" className="shrink-0 transition-transform"
+                    style={{ color: textSub, transform: isOpen ? 'rotate(180deg)' : 'none' }}>
                     <path d="M3 6l5 5 5-5"/>
                   </svg>
                 </button>
@@ -319,6 +329,7 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                   <div className="mt-1 flex flex-col gap-1.5">
                     {availableProducts.map(p => (
                       <ProductCard key={p.id} product={p} primary={primary} secondary={secondary} currency={currency}
+                        surface={surface} border={border} textMain={textMain} textSub={textSub}
                         onAdd={() => handleProductAdd(p, cat)} />
                     ))}
                   </div>
@@ -371,17 +382,19 @@ export default function MenuPublic({ restaurant, categories, featured, location 
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowCart(false)} />
 
           {/* Sheet */}
-          <div className="relative bg-white rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[85vh] flex flex-col w-full sm:max-w-md">
+          <div className="relative rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[85vh] flex flex-col w-full sm:max-w-md"
+            style={{ backgroundColor: surface }}>
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              <div className="w-10 h-1 rounded-full" style={{ backgroundColor: border }} />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
-              <h2 className="font-bold text-lg">Tu pedido</h2>
+            <div className="flex items-center justify-between px-5 pb-3" style={{ borderBottom: `1px solid ${border}` }}>
+              <h2 className="font-bold text-lg" style={{ color: textMain }}>Tu pedido</h2>
               <button onClick={() => setShowCart(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm">
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                style={{ backgroundColor: border, color: textSub }}>
                 ✕
               </button>
             </div>
@@ -393,9 +406,9 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                 {cart.map(item => (
                   <div key={item.cartId} className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-tight">{item.product.name}</p>
+                      <p className="text-sm font-medium leading-tight" style={{ color: textMain }}>{item.product.name}</p>
                       {item.extras.length > 0 && (
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs mt-0.5" style={{ color: textSub }}>
                           {item.extras.map(e => e.option.name).join(' · ')}
                         </p>
                       )}
@@ -406,7 +419,8 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                     {/* Controles cantidad */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={() => updateQty(item.cartId, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-sm font-medium hover:bg-gray-50">
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                        style={{ border: `1px solid ${border}`, color: textMain }}>
                         −
                       </button>
                       <span className="text-sm font-semibold w-5 text-center">{item.quantity}</span>
@@ -421,10 +435,10 @@ export default function MenuPublic({ restaurant, categories, featured, location 
               </div>
 
               {/* Separador */}
-              <div className="border-t border-dashed border-gray-200 my-3" />
+              <div className="my-3 border-t border-dashed" style={{ borderColor: border }} />
 
               {/* Tipo de pedido */}
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">¿Cómo lo querés?</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: textSub }}>¿Cómo lo querés?</p>
               <div className={`grid gap-2 mb-3 ${allowedTypes.length === 1 ? 'grid-cols-1' : allowedTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {[
                   { key: 'table',    label: 'Mesa',      icon: '🪑' },
@@ -432,10 +446,10 @@ export default function MenuPublic({ restaurant, categories, featured, location 
                   { key: 'delivery', label: 'Domicilio', icon: '🛵' },
                 ].filter(opt => allowedTypes.includes(opt.key as 'table' | 'pickup' | 'delivery')).map(opt => (
                   <button key={opt.key} onClick={() => setOrderType(opt.key as 'table' | 'pickup' | 'delivery')}
-                    className={`flex flex-col items-center py-3 rounded-xl border text-xs font-semibold transition-all ${
-                      orderType === opt.key ? 'border-transparent text-white' : 'border-gray-200 text-gray-500'
-                    }`}
-                    style={orderType === opt.key ? { backgroundColor: primary } : {}}>
+                    className="flex flex-col items-center py-3 rounded-xl border text-xs font-semibold transition-all"
+                    style={orderType === opt.key
+                      ? { backgroundColor: primary, borderColor: primary, color: '#fff' }
+                      : { borderColor: border, color: textSub }}>
                     <span className="text-xl mb-1">{opt.icon}</span>
                     {opt.label}
                   </button>
@@ -508,16 +522,19 @@ export default function MenuPublic({ restaurant, categories, featured, location 
 }
 
 // ── PRODUCT CARD ─────────────────────────────────────────────────────────────
-function ProductCard({ product, primary, secondary, currency, onAdd }: {
-  product: Product; primary: string; secondary: string; currency: string; onAdd: () => void
+function ProductCard({ product, primary, secondary, currency, surface, border, textMain, textSub, onAdd }: {
+  product: Product; primary: string; secondary: string; currency: string
+  surface: string; border: string; textMain: string; textSub: string
+  onAdd: () => void
 }) {
   const fmt = (n: number) => n.toLocaleString('es-CO', { minimumFractionDigits: 0 })
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+    <div className="rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3"
+      style={{ backgroundColor: surface, border: `1px solid ${border}` }}>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm leading-tight">{product.name}</p>
+        <p className="font-semibold text-sm leading-tight" style={{ color: textMain }}>{product.name}</p>
         {product.description && (
-          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{product.description}</p>
+          <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed" style={{ color: textSub }}>{product.description}</p>
         )}
         <p className="text-sm font-bold mt-1.5" style={{ color: primary }}>${fmt(product.price)}</p>
       </div>

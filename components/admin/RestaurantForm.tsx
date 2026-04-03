@@ -13,6 +13,7 @@ interface Restaurant {
   logo_url: string | null
   instagram_handle: string | null
   currency: string
+  dark_mode: boolean
 }
 
 export default function RestaurantForm({ restaurant }: { restaurant: Restaurant }) {
@@ -21,6 +22,7 @@ export default function RestaurantForm({ restaurant }: { restaurant: Restaurant 
   const [secondaryColor, setSecondaryColor] = useState(restaurant.secondary_color || '#ffffff')
   const [instagram, setInstagram] = useState(restaurant.instagram_handle || '')
   const [currency, setCurrency] = useState(restaurant.currency || 'USD')
+  const [darkMode, setDarkMode] = useState(restaurant.dark_mode ?? false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(restaurant.logo_url)
   const [saving, setSaving] = useState(false)
@@ -65,6 +67,7 @@ export default function RestaurantForm({ restaurant }: { restaurant: Restaurant 
       instagram_handle: instagram || null,
       currency,
       logo_url,
+      dark_mode: darkMode,
     }).eq('id', restaurant.id)
 
     setSaving(false)
@@ -148,6 +151,20 @@ export default function RestaurantForm({ restaurant }: { restaurant: Restaurant 
         <div className="rounded-lg p-4 text-center mt-1" style={{ backgroundColor: primaryColor }}>
           <p className="font-bold text-white text-sm">Vista previa — {name}</p>
         </div>
+      </div>
+
+      {/* Modo oscuro */}
+      <div className="flex items-center justify-between py-1">
+        <div>
+          <p className="text-sm font-medium text-gray-700">Modo oscuro</p>
+          <p className="text-xs text-gray-400">El menú público se verá con fondo negro y letras blancas</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDarkMode(!darkMode)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-200'}`}>
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
+        </button>
       </div>
 
       {/* Instagram */}

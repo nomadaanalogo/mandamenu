@@ -10,10 +10,10 @@ interface Restaurant {
 }
 
 const NAV = [
-  { label: 'Menú',       href: (id: string) => `/admin/restaurants/${id}/menu`,      icon: BookOpen },
-  { label: 'Pedidos',    href: (id: string) => `/admin/restaurants/${id}/orders`,    icon: ClipboardList },
   { label: 'Configurar', href: (id: string) => `/admin/restaurants/${id}`,           icon: Settings },
   { label: 'Sedes',      href: (id: string) => `/admin/restaurants/${id}/locations`, icon: MapPin },
+  { label: 'Menú',       href: (id: string) => `/admin/restaurants/${id}/menu`,      icon: BookOpen },
+  { label: 'Pedidos',    href: (id: string) => `/admin/restaurants/${id}/orders`,    icon: ClipboardList },
   { label: 'Ventas',     href: (id: string) => `/admin/restaurants/${id}/ventas`,    icon: BarChart2 },
 ]
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ExtraGroupManager from './ExtraGroupManager'
 import MenuImportModal from './MenuImportModal'
@@ -277,9 +277,9 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
         <div
           key={cat.id}
           draggable
-          onDragStart={() => { dragId.current = cat.id }}
+          onDragStart={(e) => { dragId.current = cat.id; e.stopPropagation() }}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={() => { if (dragId.current) reorderCategories(dragId.current, cat.id) }}
+          onDrop={(e) => { e.preventDefault(); if (dragId.current) reorderCategories(dragId.current, cat.id) }}
           onDragEnd={() => { dragId.current = null }}
           className="group/drag"
         >
@@ -398,6 +398,12 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
   const [prodReorderError, setProdReorderError] = useState<string | null>(null)
   const dragProductId = useRef<string | null>(null)
   const supabase = createClient()
+
+  // Sincronizar estado local cuando el padre actualiza category.products
+  // (toggle available, featured, etc.)
+  useEffect(() => {
+    setProducts(category.products)
+  }, [category.products])
 
   async function reorderProducts(draggedId: string, targetId: string) {
     if (draggedId === targetId) return
@@ -554,9 +560,9 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
                 <div
                   key={product.id}
                   draggable
-                  onDragStart={() => { dragProductId.current = product.id }}
+                  onDragStart={(e) => { dragProductId.current = product.id; e.stopPropagation() }}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => { if (dragProductId.current) reorderProducts(dragProductId.current, product.id) }}
+                  onDrop={(e) => { e.preventDefault(); if (dragProductId.current) reorderProducts(dragProductId.current, product.id) }}
                   onDragEnd={() => { dragProductId.current = null }}
                   className="border-b border-gray-50 last:border-0 group/prod"
                 >

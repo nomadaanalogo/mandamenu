@@ -49,11 +49,11 @@ export default async function AdminDashboard() {
                   {/* Acciones */}
                   <div className="grid grid-cols-5 gap-2">
                     {[
+                      { href: `/admin/restaurants/${r.id}`,            icon: Settings,      label: 'Config.' },
+                      { href: `/admin/restaurants/${r.id}/locations`, icon: MapPin,        label: 'Sedes' },
                       { href: `/admin/restaurants/${r.id}/menu`,      icon: BookOpen,      label: 'Menú' },
                       { href: `/admin/restaurants/${r.id}/orders`,    icon: ClipboardList, label: 'Pedidos' },
                       { href: `/admin/restaurants/${r.id}/ventas`,    icon: BarChart2,     label: 'Ventas' },
-                      { href: `/admin/restaurants/${r.id}/locations`, icon: MapPin,        label: 'Sedes' },
-                      { href: `/admin/restaurants/${r.id}`,            icon: Settings,      label: 'Config.' },
                     ].map(({ href, icon: Icon, label }) => (
                       <Link key={label} href={href}
                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
