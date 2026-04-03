@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useTransition, useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { BookOpen, ClipboardList, Settings, MapPin, ExternalLink, ChevronLeft, BarChart2 } from 'lucide-react'
 
@@ -20,8 +20,12 @@ const NAV = [
 export default function RestaurantSidebar({ restaurant }: { restaurant: Restaurant }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [pendingHref, setPendingHref] = useState<string | null>(null)
+  const [loadingHref, setLoadingHref] = useState<string | null>(null)
+
+  // Cuando la ruta cambia, la navegación terminó → limpiar spinner
+  useEffect(() => {
+    setLoadingHref(null)
+  }, [pathname])
 
   function isActive(href: string) {
     if (href === `/admin/restaurants/${restaurant.id}`) return pathname === href
@@ -30,14 +34,9 @@ export default function RestaurantSidebar({ restaurant }: { restaurant: Restaura
 
   function navigate(href: string) {
     if (pathname === href) return
-    setPendingHref(href)
-    startTransition(() => {
-      router.push(href)
-    })
+    setLoadingHref(href)
+    router.push(href)
   }
-
-  // Limpiar pending cuando la navegación termina
-  if (!isPending && pendingHref) setPendingHref(null)
 
   return (
     <aside className="w-52 bg-white border-r border-gray-100 flex flex-col shrink-0 min-h-screen">
@@ -74,7 +73,7 @@ export default function RestaurantSidebar({ restaurant }: { restaurant: Restaura
         {NAV.map(({ label, href, icon: Icon }) => {
           const to = href(restaurant.id)
           const active = isActive(to)
-          const loading = pendingHref === to && isPending
+          const loading = loadingHref === to
 
           return (
             <button
