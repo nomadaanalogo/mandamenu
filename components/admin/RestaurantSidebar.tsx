@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { BookOpen, ClipboardList, Settings, MapPin, ExternalLink, ChevronLeft, BarChart2 } from 'lucide-react'
@@ -19,7 +19,6 @@ const NAV = [
 
 export default function RestaurantSidebar({ restaurant }: { restaurant: Restaurant }) {
   const pathname = usePathname()
-  const router = useRouter()
   const [loadingHref, setLoadingHref] = useState<string | null>(null)
 
   // Cuando la ruta cambia, la navegación terminó → limpiar spinner
@@ -35,7 +34,6 @@ export default function RestaurantSidebar({ restaurant }: { restaurant: Restaura
   function navigate(href: string) {
     if (pathname === href) return
     setLoadingHref(href)
-    router.push(href)
   }
 
   return (
@@ -76,10 +74,11 @@ export default function RestaurantSidebar({ restaurant }: { restaurant: Restaura
           const loading = loadingHref === to
 
           return (
-            <button
+            <Link
               key={label}
+              href={to}
               onClick={() => navigate(to)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 active
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
@@ -93,7 +92,7 @@ export default function RestaurantSidebar({ restaurant }: { restaurant: Restaura
                 <Icon size={15} className={active ? 'text-white' : 'text-gray-400'} />
               )}
               {label}
-            </button>
+            </Link>
           )
         })}
       </nav>
