@@ -35,28 +35,41 @@ export async function POST(request: Request) {
         content: [
           {
             type: 'text',
-            text: `Analizá esta imagen de un menú de restaurante y extraé todo el contenido usando este formato exacto:
+            text: `Sos un experto en digitalizar menús de restaurante desde imágenes.
 
-# Nombre de la categoría
-## Nombre del grupo de extras (si aplica a TODOS los productos de esa categoría)
-* Opción del extra $precio (si tiene costo adicional)
-* Opción del extra (si no tiene costo)
+PASO 1 — Leé la imagen con mucho cuidado. Identificá y memorizá:
+- Todas las categorías o secciones del menú
+- Todos los productos con sus nombres, descripciones y precios exactos
+- Todos los extras, variantes, adicionales u opciones que veas
 
+PASO 2 — Volcá todo lo que leíste usando EXACTAMENTE este formato:
+
+# Nombre de categoría
 ! Nombre del producto $precio
-## Nombre del grupo de extras (si es específico de este producto)
-* Opción $precio
-* Opción
+! Nombre del producto $precio
 
-Reglas:
-- Usá # para cada categoría
-- Usá ## para grupos de extras o variantes (ej: "Cocción", "Tamaño", "Salsas", "Adicionales")
-- Si los extras aplican a TODOS los productos de la categoría, escribí ## justo después del # (antes del primer !)
-- Si los extras son solo de un producto, escribí ## justo después del ! de ese producto
-- Usá ! para cada producto, con el precio al final con $ (ej: ! Hamburguesa Clásica $12000)
-- Usá * para cada opción dentro de un grupo ## (ej: * Extra queso $2000 o * Sin cebolla)
-- Si el precio no se ve claro, no lo incluyas
-- Mantené los nombres exactamente como aparecen en el menú
-- Solo devolvé el texto formateado, sin explicaciones adicionales`,
+El formato de producto es:
+! Nombre del producto $precio
+> Descripción del producto (si tiene)
+
+Si hay extras que aplican a toda la categoría, ponelos después del #:
+# Nombre de categoría
+## Nombre del grupo de extras
+* Opción $precio
+* Opción sin costo
+
+Si los extras son de un producto específico, ponelos después de ese !:
+! Nombre del producto $precio
+> Descripción
+## Nombre del grupo de extras
+* Opción $precio
+
+Reglas importantes:
+- NO omitas ningún producto aunque el precio no se vea bien — si no se lee el precio, poné el nombre igual sin precio
+- Incluí la descripción del producto con > si hay texto descriptivo debajo del nombre (ingredientes, características, etc.)
+- Mantené los nombres tal como aparecen en el menú, sin traducir ni cambiar
+- Respetá el orden en que aparecen en la imagen
+- Solo devolvé el texto formateado, sin comentarios ni explicaciones`,
           },
           {
             type: 'image_url',
@@ -65,7 +78,7 @@ Reglas:
         ],
       },
     ],
-    max_tokens: 2500,
+    max_tokens: 4000,
   })
 
   const text = response.choices[0]?.message?.content?.trim() ?? ''
