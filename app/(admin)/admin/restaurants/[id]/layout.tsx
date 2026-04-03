@@ -13,10 +13,13 @@ export default async function RestaurantLayout({
   const { id } = await params
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: restaurant } = await supabase
     .from('restaurants')
     .select('id, name, slug, logo_url')
     .eq('id', id)
+    .eq('owner_id', user?.id ?? '')
     .single()
 
   if (!restaurant) notFound()
