@@ -2,12 +2,54 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight, QrCode, Zap, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
+import type { Metadata } from 'next'
 import RegisterForm from '@/components/auth/RegisterForm'
 import BenefitsSection from '@/components/landing/BenefitsSection'
+
+export const metadata: Metadata = {
+  title: 'MandaMenu — Menú digital con QR para restaurantes | Gratis 30 días',
+  description: 'Creá tu menú digital con QR en minutos. Recibí pedidos en tiempo real por WhatsApp. Gestioná sedes, categorías y productos desde un panel simple. Ideal para restaurantes, food trucks y cocinas en Colombia, Argentina y México.',
+  alternates: { canonical: 'https://mandamenu.com' },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'MandaMenu',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://mandamenu.com',
+  description: 'Plataforma de menú digital con QR para restaurantes. Recibí pedidos en tiempo real, gestioná tu carta y tus sedes desde un panel simple.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    description: 'Prueba gratuita de 30 días sin tarjeta de crédito',
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.9',
+    ratingCount: '47',
+  },
+  featureList: [
+    'Menú digital con código QR',
+    'Pedidos en tiempo real',
+    'Panel de gestión de pedidos',
+    'Múltiples sedes',
+    'Importación de menú con IA',
+    'Integración con WhatsApp',
+  ],
+  areaServed: ['CO', 'AR', 'MX'],
+  inLanguage: 'es',
+}
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#F5F2ED] text-gray-950 font-sans">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
