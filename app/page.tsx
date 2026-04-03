@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { UtensilsCrossed, ArrowRight, QrCode, Zap, ShoppingBag } from 'lucide-react'
+import { ArrowRight, QrCode, Zap, ShoppingBag } from 'lucide-react'
+import Image from 'next/image'
 import RegisterForm from '@/components/auth/RegisterForm'
 import BenefitsSection from '@/components/landing/BenefitsSection'
 
@@ -11,9 +12,7 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gray-950 rounded-xl flex items-center justify-center">
-            <UtensilsCrossed size={14} className="text-white" />
-          </div>
+          <Image src="/logo.png" alt="MandaMenu" width={30} height={30} className="object-contain" />
           <span className="font-black text-lg tracking-tight">MandaMenu</span>
         </div>
         <div className="flex items-center gap-6">
@@ -79,8 +78,8 @@ export default function HomePage() {
             {/* App card */}
             <div className="bg-gray-950 rounded-t-3xl px-6 pt-8 pb-0 overflow-hidden">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shrink-0">
-                  <UtensilsCrossed size={16} strokeWidth={1.5} className="text-white" />
+                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                  <Image src="/logo.png" alt="MandaMenu" width={22} height={22} className="object-contain brightness-0 invert" />
                 </div>
                 <div>
                   <p className="text-white font-black text-sm leading-tight">La Hamburguesería</p>
@@ -272,9 +271,7 @@ export default function HomePage() {
       <footer className="border-t border-gray-200 px-8 py-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-gray-950 rounded-lg flex items-center justify-center">
-              <UtensilsCrossed size={13} className="text-white" />
-            </div>
+            <Image src="/logo.png" alt="MandaMenu" width={26} height={26} className="object-contain" />
             <span className="font-black text-sm">MandaMenu</span>
           </div>
           <p className="text-xs text-gray-400">© {new Date().getFullYear()} MandaMenu — Todos los derechos reservados</p>

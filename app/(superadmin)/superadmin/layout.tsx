@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { UtensilsCrossed, Store, Users } from 'lucide-react'
+import { Store, Users } from 'lucide-react'
+import Image from 'next/image'
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -19,8 +20,8 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   return (
     <div className="flex min-h-screen bg-gray-50">
       <aside className="w-14 bg-white border-r border-gray-100 flex flex-col items-center py-4 shrink-0">
-        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center mb-6">
-          <UtensilsCrossed size={15} className="text-white" />
+        <div className="mb-6">
+          <Image src="/logo.png" alt="MandaMenu" width={28} height={28} className="object-contain" />
         </div>
 
         <nav className="flex-1 flex flex-col items-center gap-1">

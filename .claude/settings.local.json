@@ -6,7 +6,8 @@
       "Bash(grep -r 'CREATE TABLE' /c/Users/mswhi/Desktop/menu-digital --include=*.sql --include=*.ts --include=*.tsx)",
       "Bash(find \"/c/Users/mswhi/Desktop/menu-digital/app/\\(admin\\)\" -type d)",
       "Bash(gh pr:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ssh root@204.168.188.140 \"cd /var/www/menu-digital && git pull origin main && npm run build && pm2 restart mandamenu\")"
     ]
   }
 }

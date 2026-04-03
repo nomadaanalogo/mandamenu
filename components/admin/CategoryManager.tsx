@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ExtraGroupManager from './ExtraGroupManager'
 import MenuImportModal from './MenuImportModal'
@@ -114,7 +114,22 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
   const [showImport, setShowImport] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; description?: string; onConfirm: () => Promise<void> } | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const dragId = useRef<string | null>(null)
   const supabase = createClient()
+
+  async function reorderCategories(draggedId: string, targetId: string) {
+    if (draggedId === targetId) return
+    const from = categories.findIndex(c => c.id === draggedId)
+    const to = categories.findIndex(c => c.id === targetId)
+    if (from === -1 || to === -1) return
+    const reordered = [...categories]
+    const [item] = reordered.splice(from, 1)
+    reordered.splice(to, 0, item)
+    setCategories(reordered)
+    await Promise.all(
+      reordered.map((c, i) => supabase.from('categories').update({ sort_order: i }).eq('id', c.id))
+    )
+  }
 
   async function runConfirm() {
     if (!confirmAction) return
@@ -245,8 +260,16 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
       )}
 
       {categories.map((cat) => (
-        <CategoryCard
+        <div
           key={cat.id}
+          draggable
+          onDragStart={() => { dragId.current = cat.id }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => { if (dragId.current) reorderCategories(dragId.current, cat.id) }}
+          onDragEnd={() => { dragId.current = null }}
+          className="group/drag"
+        >
+        <CategoryCard
           category={cat}
           restaurantId={restaurantId}
           isOpen={openCategory === cat.id}
@@ -279,6 +302,7 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
             ))
           }}
         />
+        </div>
       ))}
 
       {/* Nueva categoría */}
@@ -356,6 +380,23 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
   const [editDesc, setEditDesc] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
   const [activeTab, setActiveTab] = useState<'productos' | 'extras'>('productos')
+  const [products, setProducts] = useState(category.products)
+  const dragProductId = useRef<string | null>(null)
+  const supabase = createClient()
+
+  async function reorderProducts(draggedId: string, targetId: string) {
+    if (draggedId === targetId) return
+    const from = products.findIndex(p => p.id === draggedId)
+    const to = products.findIndex(p => p.id === targetId)
+    if (from === -1 || to === -1) return
+    const reordered = [...products]
+    const [item] = reordered.splice(from, 1)
+    reordered.splice(to, 0, item)
+    setProducts(reordered)
+    await Promise.all(
+      reordered.map((p, i) => supabase.from('products').update({ sort_order: i }).eq('id', p.id))
+    )
+  }
 
   function startEditProduct(p: Product) {
     setEditingProductId(p.id)
@@ -394,6 +435,15 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
 
       {/* Cabecera de categoría */}
       <div className="flex items-center gap-3 px-4 py-3">
+        {/* Drag handle */}
+        <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 shrink-0 group-hover/drag:text-gray-400 transition-colors select-none"
+          title="Arrastrar para reordenar">
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+            <circle cx="4" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/>
+            <circle cx="4" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/>
+            <circle cx="4" cy="13" r="1.5"/><circle cx="8" cy="13" r="1.5"/>
+          </svg>
+        </div>
 
         {/* Nombre editable */}
         {editingName ? (
@@ -472,8 +522,16 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
                 <p className="text-xs text-gray-400 text-center py-5">No hay productos en esta categoría</p>
               )}
 
-              {category.products.map((product) => (
-                <div key={product.id} className="border-b border-gray-50 last:border-0">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  draggable
+                  onDragStart={() => { dragProductId.current = product.id }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => { if (dragProductId.current) reorderProducts(dragProductId.current, product.id) }}
+                  onDragEnd={() => { dragProductId.current = null }}
+                  className="border-b border-gray-50 last:border-0 group/prod"
+                >
 
                   {editingProductId === product.id ? (
                     // --- Formulario edición ---
@@ -502,6 +560,14 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
                     // --- Vista normal del producto ---
                     <div>
                       <div className="flex items-start px-4 py-3 gap-3">
+                        {/* Drag handle producto */}
+                        <div className="cursor-grab active:cursor-grabbing text-gray-200 group-hover/prod:text-gray-300 transition-colors shrink-0 mt-1 select-none">
+                          <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                            <circle cx="3" cy="2" r="1.3"/><circle cx="7" cy="2" r="1.3"/>
+                            <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+                            <circle cx="3" cy="12" r="1.3"/><circle cx="7" cy="12" r="1.3"/>
+                          </svg>
+                        </div>
                         {/* Info producto */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">

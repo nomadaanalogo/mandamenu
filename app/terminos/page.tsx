@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { UtensilsCrossed } from 'lucide-react'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -15,9 +15,7 @@ export default function TermsPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 max-w-4xl mx-auto">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gray-950 rounded-xl flex items-center justify-center">
-            <UtensilsCrossed size={14} className="text-white" />
-          </div>
+          <Image src="/logo.png" alt="MandaMenu" width={28} height={28} className="object-contain" />
           <span className="font-black text-lg tracking-tight">MandaMenu</span>
         </Link>
       </nav>

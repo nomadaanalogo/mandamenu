@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { UtensilsCrossed, Store } from 'lucide-react'
+import { Store } from 'lucide-react'
+import Image from 'next/image'
 import AdminUserButton from '@/components/admin/AdminUserButton'
 import { getUserPlanLimits } from '@/lib/plans'
 
@@ -19,8 +20,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* Sidebar global — estrecha */}
       <aside className="w-14 bg-white border-r border-gray-100 flex flex-col items-center py-4 shrink-0">
         {/* Logo */}
-        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center mb-6">
-          <UtensilsCrossed size={15} className="text-white" />
+        <div className="mb-6">
+          <Image src="/logo.png" alt="MandaMenu" width={28} height={28} className="object-contain" />
         </div>
 
         {/* Nav */}
