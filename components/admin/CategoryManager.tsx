@@ -1,10 +1,18 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ExtraGroupManager from './ExtraGroupManager'
 import MenuImportModal from './MenuImportModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface ExtraOption { id: string; name: string; price_add: number }
 interface ExtraGroup {
@@ -103,6 +111,27 @@ function IBtn({ onClick, label, className = '', children, stopProp = true }: {
   )
 }
 
+// --- Sortable item reutilizable (render prop) ---
+// Aplica los listeners del drag SOLO al handle, evitando conflictos con botones
+function SortableItem({ id, children }: {
+  id: string
+  children: (handleProps: React.HTMLAttributes<HTMLElement>) => React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 1 : 'auto',
+  }
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
+    </div>
+  )
+}
+
 // ====== CATEGORYMANAGER ======
 export default function CategoryManager({ restaurantId, initialCategories }: {
   restaurantId: string; initialCategories: Category[]
@@ -115,27 +144,29 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
   const [confirmAction, setConfirmAction] = useState<{ title: string; description?: string; onConfirm: () => Promise<void> } | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [dbError, setDbError] = useState<string | null>(null)
-  const dragId = useRef<string | null>(null)
   const supabase = createClient()
 
-  async function reorderCategories(draggedId: string, targetId: string) {
-    if (draggedId === targetId) return
-    const from = categories.findIndex(c => c.id === draggedId)
-    const to = categories.findIndex(c => c.id === targetId)
-    if (from === -1 || to === -1) return
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
+  function handleCategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = categories.findIndex(c => c.id === active.id)
+    const newIndex = categories.findIndex(c => c.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
     const prev = categories
-    const reordered = [...categories]
-    const [item] = reordered.splice(from, 1)
-    reordered.splice(to, 0, item)
+    const reordered = arrayMove(categories, oldIndex, newIndex)
     setCategories(reordered)
-    const results = await Promise.all(
-      reordered.map((c, i) => supabase.from('categories').update({ sort_order: i }).eq('id', c.id))
-    )
-    const failed = results.find(r => r.error)
-    if (failed) {
-      setCategories(prev)
-      setDbError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en categories.')
-    }
+    Promise.all(reordered.map((c, i) => supabase.from('categories').update({ sort_order: i }).eq('id', c.id)))
+      .then(results => {
+        if (results.find(r => r.error)) {
+          setCategories(prev)
+          setDbError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en categories.')
+        }
+      })
   }
 
   async function runConfirm() {
@@ -273,51 +304,50 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
         </div>
       )}
 
-      {categories.map((cat) => (
-        <div
-          key={cat.id}
-          draggable
-          onDragStart={(e) => { dragId.current = cat.id; e.stopPropagation() }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); if (dragId.current) reorderCategories(dragId.current, cat.id) }}
-          onDragEnd={() => { dragId.current = null }}
-          className="group/drag"
-        >
-        <CategoryCard
-          category={cat}
-          restaurantId={restaurantId}
-          isOpen={openCategory === cat.id}
-          onToggle={() => setOpenCategory(openCategory === cat.id ? null : cat.id)}
-          onRename={(name) => renameCategory(cat.id, name)}
-          onToggleVisibility={() => toggleCategory(cat.id, cat.is_active)}
-          onDelete={() => deleteCategory(cat.id)}
-          onAddProduct={addProduct}
-          onUpdateProduct={updateProduct}
-          onToggleAvailable={toggleAvailable}
-          onToggleFeatured={toggleFeatured}
-          onDeleteProduct={deleteProduct}
-          onProductExtrasChange={(productId, updatedGroups) => {
-            setCategories((prev) => prev.map((c) =>
-              c.id === cat.id ? {
-                ...c,
-                products: c.products.map((p) =>
-                  p.id === productId
-                    ? { ...p, product_extra_groups: updatedGroups.map((g) => ({ extra_groups: g })) }
-                    : p
-                ),
-              } : c
-            ))
-          }}
-          onCategoryExtrasChange={(updatedGroups) => {
-            setCategories((prev) => prev.map((c) =>
-              c.id === cat.id
-                ? { ...c, category_extra_groups: updatedGroups.map((g) => ({ extra_groups: g })) }
-                : c
-            ))
-          }}
-        />
-        </div>
-      ))}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+        <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+          {categories.map((cat) => (
+            <SortableItem key={cat.id} id={cat.id}>
+              {(handleProps) => (
+                <CategoryCard
+                  category={cat}
+                  restaurantId={restaurantId}
+                  isOpen={openCategory === cat.id}
+                  dragHandleProps={handleProps}
+                  onToggle={() => setOpenCategory(openCategory === cat.id ? null : cat.id)}
+                  onRename={(name) => renameCategory(cat.id, name)}
+                  onToggleVisibility={() => toggleCategory(cat.id, cat.is_active)}
+                  onDelete={() => deleteCategory(cat.id)}
+                  onAddProduct={addProduct}
+                  onUpdateProduct={updateProduct}
+                  onToggleAvailable={toggleAvailable}
+                  onToggleFeatured={toggleFeatured}
+                  onDeleteProduct={deleteProduct}
+                  onProductExtrasChange={(productId, updatedGroups) => {
+                    setCategories((prev) => prev.map((c) =>
+                      c.id === cat.id ? {
+                        ...c,
+                        products: c.products.map((p) =>
+                          p.id === productId
+                            ? { ...p, product_extra_groups: updatedGroups.map((g) => ({ extra_groups: g })) }
+                            : p
+                        ),
+                      } : c
+                    ))
+                  }}
+                  onCategoryExtrasChange={(updatedGroups) => {
+                    setCategories((prev) => prev.map((c) =>
+                      c.id === cat.id
+                        ? { ...c, category_extra_groups: updatedGroups.map((g) => ({ extra_groups: g })) }
+                        : c
+                    ))
+                  }}
+                />
+              )}
+            </SortableItem>
+          ))}
+        </SortableContext>
+      </DndContext>
 
       {/* Nueva categoría */}
       <div className="bg-white rounded-xl border border-dashed border-gray-200 p-4 flex gap-2">
@@ -366,10 +396,11 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
 }
 
 // ====== CATEGORY CARD ======
-function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onToggleVisibility,
+function CategoryCard({ category, restaurantId, isOpen, dragHandleProps, onToggle, onRename, onToggleVisibility,
   onDelete, onAddProduct, onUpdateProduct, onToggleAvailable, onToggleFeatured, onDeleteProduct,
   onProductExtrasChange, onCategoryExtrasChange }: {
   category: Category; restaurantId: string; isOpen: boolean
+  dragHandleProps: React.HTMLAttributes<HTMLElement>
   onToggle: () => void; onRename: (name: string) => void
   onToggleVisibility: () => void; onDelete: () => void
   onAddProduct: (catId: string, name: string, price: string, description: string) => void
@@ -396,33 +427,34 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
   const [activeTab, setActiveTab] = useState<'productos' | 'extras'>('productos')
   const [products, setProducts] = useState(category.products)
   const [prodReorderError, setProdReorderError] = useState<string | null>(null)
-  const dragProductId = useRef<string | null>(null)
   const supabase = createClient()
 
   // Sincronizar estado local cuando el padre actualiza category.products
-  // (toggle available, featured, etc.)
   useEffect(() => {
     setProducts(category.products)
   }, [category.products])
 
-  async function reorderProducts(draggedId: string, targetId: string) {
-    if (draggedId === targetId) return
-    const from = products.findIndex(p => p.id === draggedId)
-    const to = products.findIndex(p => p.id === targetId)
-    if (from === -1 || to === -1) return
+  const productSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
+  function handleProductDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = products.findIndex(p => p.id === active.id)
+    const newIndex = products.findIndex(p => p.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
     const prev = products
-    const reordered = [...products]
-    const [item] = reordered.splice(from, 1)
-    reordered.splice(to, 0, item)
+    const reordered = arrayMove(products, oldIndex, newIndex)
     setProducts(reordered)
-    const results = await Promise.all(
-      reordered.map((p, i) => supabase.from('products').update({ sort_order: i }).eq('id', p.id))
-    )
-    const failed = results.find(r => r.error)
-    if (failed) {
-      setProducts(prev)
-      setProdReorderError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en products.')
-    }
+    Promise.all(reordered.map((p, i) => supabase.from('products').update({ sort_order: i }).eq('id', p.id)))
+      .then(results => {
+        if (results.find(r => r.error)) {
+          setProducts(prev)
+          setProdReorderError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en products.')
+        }
+      })
   }
 
   function startEditProduct(p: Product) {
@@ -462,9 +494,12 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
 
       {/* Cabecera de categoría */}
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* Drag handle */}
-        <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 shrink-0 group-hover/drag:text-gray-400 transition-colors select-none"
-          title="Arrastrar para reordenar">
+        {/* Drag handle — listeners aplicados solo aquí */}
+        <div
+          className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 shrink-0 transition-colors select-none touch-none"
+          title="Arrastrar para reordenar"
+          {...dragHandleProps}
+        >
           <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
             <circle cx="4" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/>
             <circle cx="4" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/>
@@ -556,127 +591,129 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
                 <p className="text-xs text-gray-400 text-center py-5">No hay productos en esta categoría</p>
               )}
 
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  draggable
-                  onDragStart={(e) => { dragProductId.current = product.id; e.stopPropagation() }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); if (dragProductId.current) reorderProducts(dragProductId.current, product.id) }}
-                  onDragEnd={() => { dragProductId.current = null }}
-                  className="border-b border-gray-50 last:border-0 group/prod"
-                >
+              <DndContext sensors={productSensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
+                <SortableContext items={products.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  {products.map((product) => (
+                    <SortableItem key={product.id} id={product.id}>
+                      {(handleProps) => (
+                        <div className="border-b border-gray-50 last:border-0 group/prod">
+                          {editingProductId === product.id ? (
+                            // --- Formulario edición ---
+                            <div className="px-4 py-3 bg-blue-50/40 flex flex-col gap-2">
+                              <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
+                                placeholder="Nombre del producto"
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+                              <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
+                                placeholder="Descripción (opcional)"
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+                              <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
+                                placeholder="Precio"
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+                              <div className="flex gap-2">
+                                <button onClick={() => saveEditProduct(product.id)} disabled={savingEdit || !editName.trim() || !editPrice}
+                                  className="flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40">
+                                  <IcoCheck /> {savingEdit ? 'Guardando...' : 'Guardar'}
+                                </button>
+                                <button onClick={() => setEditingProductId(null)}
+                                  className="flex items-center gap-1.5 border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50">
+                                  <IcoX /> Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // --- Vista normal del producto ---
+                            <div>
+                              <div className="flex items-start px-4 py-3 gap-3">
+                                {/* Drag handle producto */}
+                                <div
+                                  className="cursor-grab active:cursor-grabbing text-gray-200 group-hover/prod:text-gray-300 transition-colors shrink-0 mt-1 select-none touch-none"
+                                  {...handleProps}
+                                >
+                                  <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                                    <circle cx="3" cy="2" r="1.3"/><circle cx="7" cy="2" r="1.3"/>
+                                    <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+                                    <circle cx="3" cy="12" r="1.3"/><circle cx="7" cy="12" r="1.3"/>
+                                  </svg>
+                                </div>
+                                {/* Info producto */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`text-sm font-medium ${!product.is_available ? 'text-gray-400' : ''}`}>
+                                      {product.name}
+                                    </span>
+                                    {product.is_featured && (
+                                      <span className="text-xs bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                        <IcoStarFilled /> Destacado
+                                      </span>
+                                    )}
+                                    {!product.is_available && (
+                                      <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">Oculto</span>
+                                    )}
+                                  </div>
+                                  {product.description && (
+                                    <p className="text-xs text-gray-400 mt-0.5 truncate">{product.description}</p>
+                                  )}
+                                  <p className="text-sm font-semibold mt-0.5">${product.price.toFixed(2)}</p>
+                                </div>
 
-                  {editingProductId === product.id ? (
-                    // --- Formulario edición ---
-                    <div className="px-4 py-3 bg-blue-50/40 flex flex-col gap-2">
-                      <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
-                        placeholder="Nombre del producto"
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
-                      <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
-                        placeholder="Descripción (opcional)"
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
-                      <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
-                        placeholder="Precio"
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
-                      <div className="flex gap-2">
-                        <button onClick={() => saveEditProduct(product.id)} disabled={savingEdit || !editName.trim() || !editPrice}
-                          className="flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40">
-                          <IcoCheck /> {savingEdit ? 'Guardando...' : 'Guardar'}
-                        </button>
-                        <button onClick={() => setEditingProductId(null)}
-                          className="flex items-center gap-1.5 border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50">
-                          <IcoX /> Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // --- Vista normal del producto ---
-                    <div>
-                      <div className="flex items-start px-4 py-3 gap-3">
-                        {/* Drag handle producto */}
-                        <div className="cursor-grab active:cursor-grabbing text-gray-200 group-hover/prod:text-gray-300 transition-colors shrink-0 mt-1 select-none">
-                          <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
-                            <circle cx="3" cy="2" r="1.3"/><circle cx="7" cy="2" r="1.3"/>
-                            <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
-                            <circle cx="3" cy="12" r="1.3"/><circle cx="7" cy="12" r="1.3"/>
-                          </svg>
-                        </div>
-                        {/* Info producto */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-sm font-medium ${!product.is_available ? 'text-gray-400' : ''}`}>
-                              {product.name}
-                            </span>
-                            {product.is_featured && (
-                              <span className="text-xs bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                <IcoStarFilled /> Destacado
-                              </span>
-                            )}
-                            {!product.is_available && (
-                              <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">Oculto</span>
-                            )}
-                          </div>
-                          {product.description && (
-                            <p className="text-xs text-gray-400 mt-0.5 truncate">{product.description}</p>
+                                {/* Acciones */}
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                  <IBtn onClick={() => startEditProduct(product)} label="Editar producto"
+                                    className="text-gray-400 hover:text-blue-500 hover:bg-blue-50">
+                                    <IcoPencil />
+                                  </IBtn>
+                                  <IBtn onClick={() => onToggleFeatured(category.id, product.id, product.is_featured)}
+                                    label={product.is_featured ? 'Quitar destacado' : 'Marcar como destacado'}
+                                    className={product.is_featured ? 'text-amber-400 hover:bg-amber-50' : 'text-gray-400 hover:text-amber-400 hover:bg-amber-50'}>
+                                    {product.is_featured ? <IcoStarFilled /> : <IcoStarOutline />}
+                                  </IBtn>
+                                  <IBtn onClick={() => onToggleAvailable(category.id, product.id, product.is_available)}
+                                    label={product.is_available ? 'Ocultar del menú' : 'Mostrar en el menú'}
+                                    className={product.is_available ? 'text-gray-400 hover:text-orange-500 hover:bg-orange-50' : 'text-orange-400 hover:bg-orange-50'}>
+                                    {product.is_available ? <IcoEye /> : <IcoEyeOff />}
+                                  </IBtn>
+                                  <IBtn onClick={() => onDeleteProduct(category.id, product.id)} label="Eliminar producto"
+                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50">
+                                    <IcoTrash />
+                                  </IBtn>
+                                </div>
+                              </div>
+
+                              {/* Extras propios del producto (expandible) */}
+                              <button
+                                onClick={() => setExpandedExtrasProductId(expandedExtrasProductId === product.id ? null : product.id)}
+                                className="w-full flex items-center gap-2 px-4 pb-2 text-xs text-gray-400 hover:text-gray-600">
+                                <IcoSparkle />
+                                {expandedExtrasProductId === product.id ? 'Ocultar extras propios' : 'Gestionar extras propios'}
+                                {(product.product_extra_groups?.length ?? 0) > 0 && (
+                                  <span className="bg-gray-100 text-gray-500 rounded-full px-1.5">
+                                    {product.product_extra_groups!.length}
+                                  </span>
+                                )}
+                              </button>
+
+                              {expandedExtrasProductId === product.id && (
+                                <div className="mx-4 mb-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                  <p className="text-xs text-gray-400 mb-3">
+                                    Extras exclusivos de este producto (se suman a los de la categoría)
+                                  </p>
+                                  <ExtraGroupManager
+                                    restaurantId={restaurantId}
+                                    entityId={product.id}
+                                    entityType="product"
+                                    initialGroups={product.product_extra_groups?.map((peg) => peg.extra_groups) ?? []}
+                                    onGroupsChange={(updatedGroups) => onProductExtrasChange(product.id, updatedGroups)}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           )}
-                          <p className="text-sm font-semibold mt-0.5">${product.price.toFixed(2)}</p>
-                        </div>
-
-                        {/* Acciones */}
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <IBtn onClick={() => startEditProduct(product)} label="Editar producto"
-                            className="text-gray-400 hover:text-blue-500 hover:bg-blue-50">
-                            <IcoPencil />
-                          </IBtn>
-                          <IBtn onClick={() => onToggleFeatured(category.id, product.id, product.is_featured)}
-                            label={product.is_featured ? 'Quitar destacado' : 'Marcar como destacado'}
-                            className={product.is_featured ? 'text-amber-400 hover:bg-amber-50' : 'text-gray-400 hover:text-amber-400 hover:bg-amber-50'}>
-                            {product.is_featured ? <IcoStarFilled /> : <IcoStarOutline />}
-                          </IBtn>
-                          <IBtn onClick={() => onToggleAvailable(category.id, product.id, product.is_available)}
-                            label={product.is_available ? 'Ocultar del menú' : 'Mostrar en el menú'}
-                            className={product.is_available ? 'text-gray-400 hover:text-orange-500 hover:bg-orange-50' : 'text-orange-400 hover:bg-orange-50'}>
-                            {product.is_available ? <IcoEye /> : <IcoEyeOff />}
-                          </IBtn>
-                          <IBtn onClick={() => onDeleteProduct(category.id, product.id)} label="Eliminar producto"
-                            className="text-gray-400 hover:text-red-500 hover:bg-red-50">
-                            <IcoTrash />
-                          </IBtn>
-                        </div>
-                      </div>
-
-                      {/* Extras propios del producto (expandible) */}
-                      <button
-                        onClick={() => setExpandedExtrasProductId(expandedExtrasProductId === product.id ? null : product.id)}
-                        className="w-full flex items-center gap-2 px-4 pb-2 text-xs text-gray-400 hover:text-gray-600">
-                        <IcoSparkle />
-                        {expandedExtrasProductId === product.id ? 'Ocultar extras propios' : 'Gestionar extras propios'}
-                        {(product.product_extra_groups?.length ?? 0) > 0 && (
-                          <span className="bg-gray-100 text-gray-500 rounded-full px-1.5">
-                            {product.product_extra_groups!.length}
-                          </span>
-                        )}
-                      </button>
-
-                      {expandedExtrasProductId === product.id && (
-                        <div className="mx-4 mb-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <p className="text-xs text-gray-400 mb-3">
-                            Extras exclusivos de este producto (se suman a los de la categoría)
-                          </p>
-                          <ExtraGroupManager
-                            restaurantId={restaurantId}
-                            entityId={product.id}
-                            entityType="product"
-                            initialGroups={product.product_extra_groups?.map((peg) => peg.extra_groups) ?? []}
-                            onGroupsChange={(updatedGroups) => onProductExtrasChange(product.id, updatedGroups)}
-                          />
                         </div>
                       )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    </SortableItem>
+                  ))}
+                </SortableContext>
+              </DndContext>
 
               {/* Agregar producto */}
               {showAddProduct ? (
