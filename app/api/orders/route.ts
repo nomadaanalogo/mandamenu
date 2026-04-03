@@ -5,8 +5,12 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { location_id, customer_name, customer_phone, order_type, table_number, delivery_address, items, notes } = body
 
+  const VALID_ORDER_TYPES = ['table', 'pickup', 'delivery']
   if (!location_id || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+  if (order_type && !VALID_ORDER_TYPES.includes(order_type)) {
+    return NextResponse.json({ error: 'Tipo de pedido inválido' }, { status: 400 })
   }
 
   const supabase = createClient(

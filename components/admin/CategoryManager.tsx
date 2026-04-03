@@ -114,6 +114,7 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
   const [showImport, setShowImport] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; description?: string; onConfirm: () => Promise<void> } | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [dbError, setDbError] = useState<string | null>(null)
   const dragId = useRef<string | null>(null)
   const supabase = createClient()
 
@@ -122,13 +123,19 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
     const from = categories.findIndex(c => c.id === draggedId)
     const to = categories.findIndex(c => c.id === targetId)
     if (from === -1 || to === -1) return
+    const prev = categories
     const reordered = [...categories]
     const [item] = reordered.splice(from, 1)
     reordered.splice(to, 0, item)
     setCategories(reordered)
-    await Promise.all(
+    const results = await Promise.all(
       reordered.map((c, i) => supabase.from('categories').update({ sort_order: i }).eq('id', c.id))
     )
+    const failed = results.find(r => r.error)
+    if (failed) {
+      setCategories(prev)
+      setDbError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en categories.')
+    }
   }
 
   async function runConfirm() {
@@ -251,6 +258,13 @@ export default function CategoryManager({ restaurantId, initialCategories }: {
 
   return (
     <div className="flex flex-col gap-3">
+      {dbError && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+          <span>{dbError}</span>
+          <button onClick={() => setDbError(null)} className="shrink-0 text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
+
       {categories.length === 0 && (
         <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
           <p className="text-3xl mb-3">🍽️</p>
@@ -381,6 +395,7 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
   const [savingEdit, setSavingEdit] = useState(false)
   const [activeTab, setActiveTab] = useState<'productos' | 'extras'>('productos')
   const [products, setProducts] = useState(category.products)
+  const [prodReorderError, setProdReorderError] = useState<string | null>(null)
   const dragProductId = useRef<string | null>(null)
   const supabase = createClient()
 
@@ -389,13 +404,19 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
     const from = products.findIndex(p => p.id === draggedId)
     const to = products.findIndex(p => p.id === targetId)
     if (from === -1 || to === -1) return
+    const prev = products
     const reordered = [...products]
     const [item] = reordered.splice(from, 1)
     reordered.splice(to, 0, item)
     setProducts(reordered)
-    await Promise.all(
+    const results = await Promise.all(
       reordered.map((p, i) => supabase.from('products').update({ sort_order: i }).eq('id', p.id))
     )
+    const failed = results.find(r => r.error)
+    if (failed) {
+      setProducts(prev)
+      setProdReorderError('No se pudo guardar el orden. Asegurate de que exista la columna sort_order en products.')
+    }
   }
 
   function startEditProduct(p: Product) {
@@ -518,6 +539,13 @@ function CategoryCard({ category, restaurantId, isOpen, onToggle, onRename, onTo
           {/* Tab: Productos */}
           {activeTab === 'productos' && (
             <div>
+              {prodReorderError && (
+                <div className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 mx-4 mt-2">
+                  <span>{prodReorderError}</span>
+                  <button onClick={() => setProdReorderError(null)} className="shrink-0 text-red-400 hover:text-red-600">✕</button>
+                </div>
+              )}
+
               {category.products.length === 0 && !showAddProduct && (
                 <p className="text-xs text-gray-400 text-center py-5">No hay productos en esta categoría</p>
               )}

@@ -18,6 +18,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No se recibió imagen' }, { status: 400 })
   }
 
+  const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: 'La imagen no puede superar 5 MB' }, { status: 413 })
+  }
+
   const buffer = await file.arrayBuffer()
   const base64 = Buffer.from(buffer).toString('base64')
   const mimeType = file.type || 'image/jpeg'
