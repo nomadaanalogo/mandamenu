@@ -17,9 +17,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     getUserPlanLimits(user.id),
   ])
 
-  // Redirigir si no es admin
+  // Sellers no pueden entrar al admin
   if (userData?.role === 'seller') redirect('/seller')
-  if (userData?.role === 'superadmin') redirect('/superadmin')
 
   // Trial expirado
   if (sub?.status === 'trial' && sub.trial_ends_at && new Date(sub.trial_ends_at) < new Date()) {
